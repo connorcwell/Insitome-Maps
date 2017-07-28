@@ -30,10 +30,6 @@ traits = gc.open_by_key('1yZCN3vkQWZLQea1xOvfAb4OzfM8zqN4tQn44obWT7m4')
 t_sheet = traits.sheet1
 trait = pd.DataFrame(t_sheet.get_all_records())
 
-print "retrieved sheets from google drive"
-
-print "creating database..."
-
 #merging data onto one database
 flt = pd.merge(cord, al, copy=False, on='CODE')
 
