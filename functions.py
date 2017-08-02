@@ -1,31 +1,43 @@
 import numpy as np
 
-def new_cord(lat_x, lon_y, a_z):
-    start = 0
-    end=len(real)   #loops through cordinate data array
-    while (start < end):
-        lat_1=(real[start][0])  #gets a lat to generate mid point
-        lon_1=(real[start][1])  #gets a lon to generate mid point
-        start2 = 0
-        while (start2 < end):
-            lat_2=(real[start2][0]) #second lat to gen mid point the [0] is for column 1
-            lon_2=(real[start2][1]) #second lon to gen mid point the [1] is for column 2 in the data
-            start2=start2+1
+def intermediates(lat_1, lon_1, lat_2, lon_2, nb_points):
+    """"Return a list of nb_points equally spaced points
+    between p1 and p2"""
+    # If we have 8 intermediate points, we have 8+1=9 spaces
+    # between p1 and p2
+    x_spacing = (lat_2 - lat_1) / (nb_points + 1)
+    y_spacing = (lon_2 - lon_1) / (nb_points + 1)
 
-        start=start+1
+    return [[lat_1 + i * x_spacing, lon_1 +  i * y_spacing]
+            for i in range(1, nb_points+1)]
 
-    f = interpolate.Rbf(lat_x, lon_y, a_z, smooth=2)    #creates an interpolated allele frequency based on current lat, lon, and allele freq
+def getPoints(lat_x, lon_y, a_z, smooth, nb_points):
+    if nb_points > 0:
+        start = 0
+        end=len(real)
+        while (start < end):
+            lat_1=(real[start][0])
+            lon_1=(real[start][1])
+            start2 = 0
+            while (start2 < end):
+                lat_2=(real[start2][0])
+                lon_2=(real[start2][1])
+                start2=start2+1
+                start3 = 0
+                while (start3 < end):
+                    interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points)
+                    interm = np.array(interm)
+                    new_lat = [float(item[0]) for item in interm]
+                    new_lon = [float(item[1]) for item in interm]
+                    f = interpolate.Rbf(lat_x, lon_y, a_z, smooth=smooth)
 
-    new_lat = (float(lat_1+lat_2)/2)    #uses mid-point formula to gen mid point lat
+                    new_a =  f(new_lat, new_lon)
 
-    new_lon = (float(lon_1+lon_2)/2)    #mid-point formula to gen mid point lon
+                    new_cords = (zip(new_lat,new_lon,new_a))
+                    new_cords = np.array(new_cords)
+                    start3=start3+1
 
-    print new_lat, new_lon  
-
-    new_a =  f(new_lat, new_lon)    #using interpolating to gen allele freq for midpoint
-
-    print new_a
-
-    lat = np.append(lat_x, new_lat) #merges mid point lat to main lat data
-    lon = np.append(lon_y, new_lon) #merges mid point lon to main lon data
-    a = np.append(a_z, new_a)   #merges mid point allele freq to main allele data
+            start=start+1
+    else:
+        print "Error in arg nb_points: Need to enter value greater than 0"
+return new_cords
