@@ -38,6 +38,6 @@ def getPoints(lat_x, lon_y, a_z, smooth, nb_points):
                     start3=start3+1
 
             start=start+1
+            return new_cords
     else:
         print "Error in arg nb_points: Need to enter value greater than 0"
-        return new_cords
