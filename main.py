@@ -10,11 +10,13 @@ lat = [float(item[1]) for item in array]
 lon = [float(item[2]) for item in array]
 a = [float(item[3]) for item in array]
 
-real_zip = (zip(lat, lon))  #merges lat and lon data into one
+print "old data"
+old_data = (zip(lat,lon,a))
+print (np.array(old_data))
 
-real = np.array(real_zip) #turns merged data into numpy array
-
-new_cord(lat, lon, a) #runs function
+print "new data"
+new_data = getPoints(lat,lon,a,2,5)
+print new_data
 
 #replace stamentoner with whatever tileset is best (custom ones can be made)
 m = folium.Map([48., 5.], tiles='stamentoner',control_scale = True, zoom_start=1)
