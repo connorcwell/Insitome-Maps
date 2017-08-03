@@ -38,6 +38,7 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
     if nb_points > 0:
         start = 0
         end=len(real)
+        new_cords = np.array([])
         while (start < end):
             lat_1=(real[start][0])
             lon_1=(real[start][1])
@@ -47,7 +48,6 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
                 lon_2=(real[start2][1])
                 start2=start2+1
                 start3 = 0
-                new_cords = np.array([])
                 while (start3 < end):
                     
                     interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points)
