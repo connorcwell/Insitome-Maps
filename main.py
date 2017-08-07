@@ -10,20 +10,24 @@ lat = [float(item[1]) for item in array]
 lon = [float(item[2]) for item in array]
 a = [float(item[3]) for item in array]
 
-print "old data"
-old_data = (zip(lat,lon,a))
-print (np.array(old_data))
+real_zip = (zip(lat, lon))
 
-print "new data"
-new_data = getPoints(lat,lon,a,2,5)
-print new_data
+real = np.array(real_zip)
+
+lat_lon = (zip(lat,lon))
+
+old_data = (zip(lat,lon,a))
+dataset = np.array(lat_lon)
+
+new_data = getPoints(dataset,lat,lon,a,100,100)
+
+data_cord = np.concatenate((old_data,new_data))
 
 #replace stamentoner with whatever tileset is best (custom ones can be made)
 m = folium.Map([48., 5.], tiles='stamentoner',control_scale = True, zoom_start=1)
 
 #play around with radius value to see which one is best, and gradient changes heatmap colors
-m.add_child(plugins.HeatMap(zip(lat, lon, a), radius = 13, gradient={.4: 'dodgerblue', .6: 'blue', 1: 'blue'}))
+m.add_child(plugins.HeatMap(data_cord, radius = 10, gradient={.4: 'blue', .6: 'red', 1: 'white'}))
 
 #saves heatmap as an html file
 m.save('map.html')
-
