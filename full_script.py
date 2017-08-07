@@ -23,6 +23,14 @@ from math import cos, asin, sqrt
 import pprint
 from geopy.distance import vincenty
 
+def distance(lat1, lon1, lat2, lon2):
+    p = 0.017453292519943295
+    a = 0.5 - cos((lat2-lat1)*p)/2 + cos(lat1*p)*cos(lat2*p) * (1-cos((lon2-lon1)*p)) / 2
+    return 12742 * asin(sqrt(a))
+
+def closest(data, lat, lon):
+    return min(data, key=lambda p: distance(lat,lon,data[0],data[1]))
+
 def intermediates(lat_1, lon_1, lat_2, lon_2, nb_points):
     """Return a list of nb_points equally spaced points
     between p1 and p2"""
@@ -48,12 +56,14 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
                 lon_2=(real[start2][1])
                 start2=start2+1
                 start3 = 0
+
                 while (start3 < end):
-                    
+
                     interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points)
                     interm = np.array(interm)
                     new_lat = [float(item[0]) for item in interm]
                     new_lon = [float(item[1]) for item in interm]
+
                     f = interpolate.Rbf(lat_x, lon_y, a_z, smooth=smooth)
 
                     new_a =  f(new_lat, new_lon)
@@ -62,8 +72,8 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
                     new_cords =  np.append(new_cords,new_set_1)
                     start3=start3+1
             start=start+1
-
-        return new_cords
+            n = len(new_cords)/3
+        return np.reshape(new_cords, (n,3))
     else:
         print "Error in arg nb_points: Need to enter value greater than 0"
 
@@ -123,18 +133,26 @@ real_zip = (zip(lat, lon))
 
 real = np.array(real_zip)
 
+lat = lat
+
+lon = lon
+
+a = a
+
 lat_lon = (zip(lat,lon))
 
 #new_cord(lat,lon,a,2)
 
 print "old data"
 old_data = (zip(lat,lon,a))
-dataset = np.array(old_data)
-print dataset
+dataset = np.array(lat_lon)
+#print (np.array(old_data))
 
 print "new data"
-new_data = getPoints(dataset,lat,lon,a,2,5)
-print new_data
+new_data = getPoints(dataset,lat,lon,a,100,100)
+
+data_cord = np.concatenate((old_data,new_data))
+
 
 print "got cordinates"
 print "interpolating..."
@@ -148,7 +166,7 @@ print "creating map..."
 m = folium.Map([48., 5.], tiles='stamentoner',control_scale = True, zoom_start=1)
 
 #play around with radius value to see which one is best, and gradient changes heatmap colors
-m.add_child(plugins.HeatMap(zip(lat, lon, a), radius = 13, gradient={.4: 'dodgerblue', .6: 'blue', 1: 'blue'}))
+m.add_child(plugins.HeatMap(data_cord, radius = 10, gradient={.4: 'blue', .6: 'red', 1: 'white'}))
 
 print "created map"
 
