@@ -23,13 +23,26 @@ from math import cos, asin, sqrt
 import pprint
 from geopy.distance import vincenty
 
-def distance(lat1, lon1, lat2, lon2):
-    p = 0.017453292519943295
-    a = 0.5 - np.cos((lat2-lat1)*p)/2 + np.cos(lat1*p)*np.cos(lat2*p) * (1-np.cos((lon2-lon1)*p)) / 2
-    return 12742 * np.arcsin(np.sqrt(a))
+def distance(lat1,lng1,lat2,lng2):
+    '''calculates the distance between two lat, long coordinate pairs'''
+    R = 6371000 # radius of earth in m
+    lat1rads = np.radians(lat1) #converts the points into radians
+    lat2rads = np.radians(lat2)
+    deltaLat = np.radians((lat2-lat1))
+    deltaLng = np.radians((lng2-lng1))
+    a = np.sin(deltaLat/2) * np.sin(deltaLat/2) + np.cos(lat1rads) * np.cos(lat2rads) * np.sin(deltaLng/2) * np.sin(deltaLng/2) #haversine formula (nick was right, he did intrigue me)
+    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
+    d = R * c
+    return d
 
-def closest(data, lat, lon):
-    return min(data, key=lambda p: distance(lat,lon,data[0],data[1]))
+
+def closest(data, lat_data, lon_data, lat, lon):
+    """
+    finds the closest point to the point specified within the dataset
+    the lat_data and lon_data are numpy arrays of the lat and lon from the dataset (have to be seperate) 
+
+    """
+    return min(data, key=lambda p: distance(lat,lon,lat_data,lon_data))
 
 def intermediates(lat_1, lon_1, lat_2, lon_2, nb_points):
     """Return a list of nb_points equally spaced points
@@ -43,6 +56,10 @@ def intermediates(lat_1, lon_1, lat_2, lon_2, nb_points):
             for i in range(1, nb_points+1)]
 
 def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
+    """
+    returns an array of midpoints
+
+    """
     if nb_points > 0:
         start = 0
         end=len(real)
@@ -58,7 +75,8 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
                 start3 = 0
 
                 while (start3 < end):
-
+                    clos = closest(dataset, lat_x, lon_y, lat_1, lon_1)
+                    print clos
                     interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points)
                     interm = np.array(interm)
                     new_lat = [float(item[0]) for item in interm]
@@ -129,51 +147,34 @@ lat = [float(item[1]) for item in array]
 lon = [float(item[2]) for item in array]
 a = [float(item[3]) for item in array]
 
-real_zip = (zip(lat, lon))
-
-real = np.array(real_zip)
-
-lat = lat
-
-lon = lon
-
-a = a
+real_zip = (zip(lat, lon)) #creates list that only has lat and lon to be used in function getPoints
+real = np.array(real_zip) #converts the list to numpy array so the lat and lon can be accessed
 
 lat_lon = (zip(lat,lon))
 
-#new_cord(lat,lon,a,2)
-
-print "old data"
-old_data = (zip(lat,lon,a))
+old_data = (zip(lat,lon,a)) 
 dataset = np.array(lat_lon)
-#print (np.array(old_data))
 
-print "new data"
-new_data = getPoints(dataset,lat,lon,a,100,100)
+new_data = getPoints(dataset,lat,lon,a,0,1) 
 
-data_cord = np.concatenate((old_data,new_data))
+data_cord = np.concatenate((old_data,new_data)) #merges the original set of cordinates and the interpolated cordinates 
 
 
 print "got cordinates"
-print "interpolating..."
 
-#new_cord(lat, lon, a)
-
-print "completed interpolating"
 print "creating map..."
 
 #replace stamentoner with whatever tileset is best (custom ones can be made)
 m = folium.Map([48., 5.], tiles='stamentoner',control_scale = True, zoom_start=1)
 
 #play around with radius value to see which one is best, and gradient changes heatmap colors
-m.add_child(plugins.HeatMap(data_cord, radius = 10, gradient={.4: 'blue', .6: 'red', 1: 'white'}))
+m.add_child(plugins.HeatMap(data_cord, radius = 10, gradient={.2: 'blue', .4: 'yellow', .6: 'orange', .8: 'red', 1: 'white'}))
 
 print "created map"
 
 print "saving map..."
 #saves heatmap as an html file
 m.save('map.html')
-
 print "map saved"
 
 print "kind of created by Connor Caldwell"
@@ -181,7 +182,7 @@ print "kind of created by Connor Caldwell"
 endTime = time.time()-start
 
 if endTime < 2:
-    print '-----This program ran in', endTime, 'seconds! That was super fast!-----'
+    print '-----This program ran in', endTime, 'seconds! That was super fast!-----' #got bored over the weekend so I made this :)
 else:
     print '-----This program ran in', endTime, 'seconds. That was really slow.-----'
 
@@ -192,4 +193,6 @@ _________
 \     \___(  <_> )   |  \   |  (  <_> )  | \/
  \______  /\____/|___|  /___|  /\____/|__|
         \/            \/     \/
+
+just fyi i didnt make that
 """
