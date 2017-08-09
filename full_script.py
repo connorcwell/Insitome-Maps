@@ -22,24 +22,34 @@ from sklearn.neighbors import NearestNeighbors
 from math import cos, asin, sqrt
 import pprint
 from geopy.distance import vincenty
+from functools import partial
 
-def distance(lat1,lng1,lat2,lng2):
-    '''calculates the distance between two lat, long coordinate pairs'''
-    R = 6371000 # radius of earth in m
-    lat1rads = np.radians(lat1) #converts the points into radians
-    lat2rads = np.radians(lat2)
-    deltaLat = np.radians((lat2-lat1))
-    deltaLng = np.radians((lng2-lng1))
-    a = np.sin(deltaLat/2) * np.sin(deltaLat/2) + np.cos(lat1rads) * np.cos(lat2rads) * np.sin(deltaLng/2) * np.sin(deltaLng/2) #haversine formula (nick was right, he did intrigue me)
-    c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
-    d = R * c
-    return d
+def getClosest(array, coord):
+    dist=lambda s,d: (s[0]-d[0])**2+(s[1]-d[1])**2 #a little function which calculates the distance between two coordinates
+    return min(array, key=partial(dist, coord))
 
+def distance(lon1, lat1, lon2, lat2):
+    """
+    Calculate the great circle distance between two points
+    on the earth (specified in decimal degrees).
+    Source: https://gis.stackexchange.com/a/56589/15183
+    """
+    # convert decimal degrees to radians
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
+    c = 2 * np.arcsin(np.sqrt(a))
+    km = 6367 * c
+    return km
+
+distance(21.565, 48.123, 100.765, 80.111)
 
 def closest(data, lat_data, lon_data, lat, lon):
     """
     finds the closest point to the point specified within the dataset
-    the lat_data and lon_data are numpy arrays of the lat and lon from the dataset (have to be seperate) 
+    the lat_data and lon_data are numpy arrays of the lat and lon from the dataset (have to be seperate)
 
     """
     return min(data, key=lambda p: distance(lat,lon,lat_data,lon_data))
@@ -57,13 +67,13 @@ def intermediates(lat_1, lon_1, lat_2, lon_2, nb_points):
 
 def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
     """
-    returns an array of midpoints
+    returns an array of midpoints (main function)
 
     """
     if nb_points > 0:
         start = 0
         end=len(real)
-        new_cords = np.array([])
+        new_cords = np.array([]) #creates empty numpy array for data to append to
         while (start < end):
             lat_1=(real[start][0])
             lon_1=(real[start][1])
@@ -75,23 +85,23 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
                 start3 = 0
 
                 while (start3 < end):
-                    clos = closest(dataset, lat_x, lon_y, lat_1, lon_1)
-                    print clos
-                    interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points)
-                    interm = np.array(interm)
-                    new_lat = [float(item[0]) for item in interm]
-                    new_lon = [float(item[1]) for item in interm]
+                    clos = getClosest(dataset, (lat_1,lon_1))
+                    lat_2 = clos[0]
+                    lon_2 = clos[1]
+                    interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points) #determines intermediates
+                    interm = np.array(interm) #converts intermediates to numpy array
+                    new_lat = [float(item[0]) for item in interm] #seperates lat
+                    new_lon = [float(item[1]) for item in interm] #seperates lon
+                    f = interpolate.Rbf(lat_x, lon_y, a_z, smooth=smooth) #creates interpolation method
 
-                    f = interpolate.Rbf(lat_x, lon_y, a_z, smooth=smooth)
-
-                    new_a =  f(new_lat, new_lon)
-                    new_set = (zip(new_lat,new_lon,new_a))
-                    new_set_1 = np.array(new_set)
-                    new_cords =  np.append(new_cords,new_set_1)
+                    new_a =  f(new_lat, new_lon) #generates new allele freq using interpolation function
+                    new_set = (zip(new_lat,new_lon,new_a)) #zips each lat lon and allele freq together
+                    new_set_1 = np.array(new_set) #converts the zipped data into a numpy array
+                    new_cords =  np.append(new_cords,new_set_1) #appends the data to an empty numpy array
                     start3=start3+1
             start=start+1
-            n = len(new_cords)/3
-        return np.reshape(new_cords, (n,3))
+            n = len(new_cords)/3 #determines length of numpy array
+        return np.reshape(new_cords, (n,3)) #reshapes numpy array for future merging
     else:
         print "Error in arg nb_points: Need to enter value greater than 0"
 
@@ -152,13 +162,16 @@ real = np.array(real_zip) #converts the list to numpy array so the lat and lon c
 
 lat_lon = (zip(lat,lon))
 
-old_data = (zip(lat,lon,a)) 
+old_data = (zip(lat,lon,a))
 dataset = np.array(lat_lon)
+print dataset
 
-new_data = getPoints(dataset,lat,lon,a,0,1) 
+coord = (100.11,100.11)
 
-data_cord = np.concatenate((old_data,new_data)) #merges the original set of cordinates and the interpolated cordinates 
 
+new_data = getPoints(dataset,lat,lon,a,0,3) #second to last arg is smoothing, arg after that is number of points in between
+
+data_cord = np.concatenate((old_data,new_data)) #merges the original set of cordinates and the interpolated cordinates
 
 print "got cordinates"
 
@@ -173,8 +186,7 @@ m.add_child(plugins.HeatMap(data_cord, radius = 10, gradient={.2: 'blue', .4: 'y
 print "created map"
 
 print "saving map..."
-#saves heatmap as an html file
-m.save('map.html')
+m.save('map.html') #saves map as html file
 print "map saved"
 
 print "kind of created by Connor Caldwell"
