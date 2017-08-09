@@ -23,10 +23,18 @@ from math import cos, asin, sqrt
 import pprint
 from geopy.distance import vincenty
 from functools import partial
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 def getClosest(array, coord):
     dist=lambda s,d: (s[0]-d[0])**2+(s[1]-d[1])**2 #a little function which calculates the distance between two coordinates
-    return min(array, key=partial(dist, coord))
+    clos =  min(array, key=partial(dist, coord))
+    dat = np.delete(array, np.where(array == clos), axis=0)
+    clos_new =  min(dat, key=partial(dist, coord))
+    dat_new = np.delete(array, np.where(array == clos_new), axis=0)
+    clos_new_1 = min(dat_new, key=partial(dist, coord))
+    return np.concatenate((clos_new,clos_new_1))
+
 
 def distance(lon1, lat1, lon2, lat2):
     """
@@ -86,10 +94,16 @@ def getPoints(dataset, lat_x, lon_y, a_z, smooth, nb_points):
 
                 while (start3 < end):
                     clos = getClosest(dataset, (lat_1,lon_1))
+                    print clos
                     lat_2 = clos[0]
                     lon_2 = clos[1]
+                    lat_3 = clos[2]
+                    lon_3 = clos[3]
+                    interm_2 = intermediates(lat_1,lon_1,lat_3,lon_3,nb_points)
                     interm = intermediates(lat_1,lon_1,lat_2,lon_2,nb_points) #determines intermediates
                     interm = np.array(interm) #converts intermediates to numpy array
+                    interm_2 = np.array(interm_2)
+                    interm = np.concatenate((interm,interm_2))
                     new_lat = [float(item[0]) for item in interm] #seperates lat
                     new_lon = [float(item[1]) for item in interm] #seperates lon
                     f = interpolate.Rbf(lat_x, lon_y, a_z, smooth=smooth) #creates interpolation method
@@ -169,13 +183,22 @@ print dataset
 coord = (100.11,100.11)
 
 
-new_data = getPoints(dataset,lat,lon,a,0,3) #second to last arg is smoothing, arg after that is number of points in between
+new_data = getPoints(dataset,lat,lon,a,10,3) #second to last arg is smoothing, arg after that is number of points in between
 
 data_cord = np.concatenate((old_data,new_data)) #merges the original set of cordinates and the interpolated cordinates
 
 print "got cordinates"
 
 print "creating map..."
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+dat1 = np.array(old_data)
+dat = dat1[dat1[:, 1].argsort()]
+print dat
+ax.plot(dat[0], dat[1], dat[2], label='parametric curve')
+
+plt.show()
 
 #replace stamentoner with whatever tileset is best (custom ones can be made)
 m = folium.Map([48., 5.], tiles='stamentoner',control_scale = True, zoom_start=1)
