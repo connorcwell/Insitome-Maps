@@ -7,21 +7,12 @@ import pandas as pd
 import numpy as np
 from numpy import genfromtxt
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from oauth2client.service_account import ServiceAccountCredentials #used to import files form g drive
 import scipy
 from scipy import interpolate
 from scipy.interpolate import Rbf
 from math import cos, asin, sqrt
 from functools import partial
-
-name = raw_input("What's your name? ")
-print "How are you %s?" % name
-how = raw_input("")
-
-if how != "Bad" and how != "Terrible" and how != "Not so Good" and how != "Eh":
-    print "Glad to hear that %s! Why don't we get on with the program then." % name
-else:
-    print "Sorry to hear that %s. Let's get on with the program." % name
 
 def getClosest(array, coord):
     dist=lambda s,d: (s[0]-d[0])**2+(s[1]-d[1])**2 #a little function which calculates the distance between two coordinates
@@ -166,6 +157,16 @@ def render(number_points, smoothing, radius, array):
     m.save('map.html') #saves map as html file
 
 if __name__ == "__main__":
+    
+    name = raw_input("What's your name? ")
+    print "How are you %s?" % name
+    how = raw_input("")
+
+    if how != "Bad" and how != "Terrible" and how != "Not so Good" and how != "Eh":
+        print "Glad to hear that %s! Why don't we get on with the program then." % name
+    else:
+        print "Sorry to hear that %s. Let's get on with the program." % name
+
     number_points = input("How many points do you want in between? ")
     if number_points > 25:
         print "That's too big of a number!"
