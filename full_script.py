@@ -39,14 +39,14 @@ def distance(lon1, lat1, lon2, lat2):
     Source: https://gis.stackexchange.com/a/56589/15183
     """
     # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2]) #converts points to radians
     # haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
     a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
     c = 2 * np.arcsin(np.sqrt(a))
     km = 6367 * c
-    return km
+    return km #returns distance
 
 def closest(data, lat_data, lon_data, lat, lon):
     """
@@ -196,7 +196,7 @@ endTime = time.time()-start
 
 print 'Finished the map in', endTime, 'seconds!'
 
-print "kind of created by Connor Caldwell"
+print "partially created by Connor Caldwell"
 
 """
 _________
