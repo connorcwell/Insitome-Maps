@@ -14,7 +14,12 @@ from scipy.interpolate import Rbf
 from math import cos, asin, sqrt
 from functools import partial
 
+#note that there are multiple functions for getting closest point and finding distance so you can choose between them
+
 def getClosest(array, coord):
+    """
+    This function returns two closest points
+    """
     dist=lambda s,d: (s[0]-d[0])**2+(s[1]-d[1])**2 #a little function which calculates the distance between two coordinates
     clos =  min(array, key=partial(dist, coord))
     dat = np.delete(array, np.where(array == clos), axis=0)
@@ -30,13 +35,13 @@ def distance(lon1, lat1, lon2, lat2):
     Source: https://gis.stackexchange.com/a/56589/15183
     """
     # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2]) #converts points into radians
     # haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
     a = np.sin(dlat/2)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2)**2
     c = 2 * np.arcsin(np.sqrt(a))
-    km = 6367 * c
+    km = 6371 * c #6371 is the radius of earth in km
     return km
 
 def closest(data, lat_data, lon_data, lat, lon):
@@ -183,6 +188,7 @@ if __name__ == "__main__":
 
     print "Wait a sec..."
 
+    #calls main functions to gen map and get data
     ar = getData()
     render(number_points, smoothing, radius, ar)
 
